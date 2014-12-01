@@ -28,20 +28,7 @@ namespace ExtractTypeToFileDiagnostic.Test
         [Test]
         public async Task ShouldProduceDiagnosticWhenTypeNameDoesNotMatchFileName()
         {
-            var content = @"
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
-    using System.Threading.Tasks;
-    using System.Diagnostics;
-
-    namespace ConsoleApplication1
-    {
-        class TypeName
-        {   
-        }
-    }";
+            var content = CreateContentWithSingleType();
 
             var project = GetSampleProject();
             var documentId = DocumentId.CreateNewId(project.Id);
@@ -54,7 +41,7 @@ namespace ExtractTypeToFileDiagnostic.Test
                 Id = ExtractTypeToFileAnalyzer.DiagnosticId,
                 Message = string.Format(ExtractTypeToFileAnalyzer.MessageFormat, "TypeName", "Class1"),
                 Severity = DiagnosticSeverity.Warning,
-                Locations = new[] { new DiagnosticResultLocation("Class1.cs", 11, 15) }
+                Locations = new[] { new DiagnosticResultLocation("Class1.cs", 11, 27) }
             };
 
             var analyzer = GetCSharpDiagnosticAnalyzer();
@@ -70,6 +57,24 @@ namespace ExtractTypeToFileDiagnostic.Test
 
             var diagnostics2 = await DiagnosticVerifier.GetSortedDiagnosticsFromDocumentsAsync(analyzer, newDocument);
             DiagnosticVerifier.VerifyDiagnosticResults(diagnostics2, analyzer, new DiagnosticResult[0]);
+        }
+
+        private static string CreateContentWithSingleType()
+        {
+            return @"
+                using System;
+                using System.Collections.Generic;
+                using System.Linq;
+                using System.Text;
+                using System.Threading.Tasks;
+                using System.Diagnostics;
+
+                namespace ConsoleApplication1
+                {
+                    class TypeName
+                    {
+                    }
+                }";
         }
 
         private static Project GetSampleProject()
