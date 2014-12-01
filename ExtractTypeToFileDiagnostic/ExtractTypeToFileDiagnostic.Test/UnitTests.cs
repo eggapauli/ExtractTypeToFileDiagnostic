@@ -25,7 +25,7 @@ namespace ExtractTypeToFileDiagnostic.Test
         }
 
         [Test]
-        public async Task ShouldProduceDiagnosticWhenTypeNameDoesNotMatchFileName()
+        public async Task ShouldRenameFileWhenTypeNameDoesNotMatchFileName()
         {
             var content = CreateContentWithSingleType();
 
