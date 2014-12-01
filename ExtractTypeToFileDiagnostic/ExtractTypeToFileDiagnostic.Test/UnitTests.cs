@@ -79,7 +79,7 @@ namespace ExtractTypeToFileDiagnostic.Test
 
         private static Project GetSampleProject()
         {
-            const string projectName = "ProjectName";
+            const string projectName = "SampleProject";
 
             var projectId = ProjectId.CreateNewId(debugName: projectName);
 
