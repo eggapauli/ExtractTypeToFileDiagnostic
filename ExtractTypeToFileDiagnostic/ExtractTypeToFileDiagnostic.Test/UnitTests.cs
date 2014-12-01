@@ -18,7 +18,7 @@ namespace ExtractTypeToFileDiagnostic.Test
         public async Task ShouldNotProduceDiagnosticsWhenFileIsEmpty()
         {
             var analyzer = GetCSharpDiagnosticAnalyzer();
-            var document = CreateDocument("Class1.cs", "");
+            var document = GetSampleProject().AddDocument("Class1.cs", "");
 
             var diagnostics = await DiagnosticVerifier.GetSortedDiagnosticsFromDocumentsAsync(analyzer, document);
 
@@ -42,7 +42,12 @@ namespace ExtractTypeToFileDiagnostic.Test
         {   
         }
     }";
-            var document = CreateDocument("Class1.cs", content);
+
+            var project = GetSampleProject();
+            var documentId = DocumentId.CreateNewId(project.Id);
+            var document = project.Solution
+                .AddDocument(documentId, "Class1.cs", content)
+                .GetDocument(documentId);
 
             var expectedDiagnostic = new DiagnosticResult
             {
@@ -56,18 +61,15 @@ namespace ExtractTypeToFileDiagnostic.Test
             var diagnostics = await DiagnosticVerifier.GetSortedDiagnosticsFromDocumentsAsync(analyzer, document);
             DiagnosticVerifier.VerifyDiagnosticResults(diagnostics, analyzer, expectedDiagnostic);
 
-            var newDocument = CreateDocument("TypeName.cs", content);
+            var newDocument = project.Solution
+                .AddDocument(documentId, "TypeName.cs", content)
+                .GetDocument(documentId);
             var actualSolution = await CodeFixVerifier.ApplyFixAsync(GetCSharpCodeFixProvider(), document, diagnostics.Single());
 
             await CodeFixVerifier.VerifyFix(actualSolution, newDocument.Project.Solution);
 
             var diagnostics2 = await DiagnosticVerifier.GetSortedDiagnosticsFromDocumentsAsync(analyzer, newDocument);
             DiagnosticVerifier.VerifyDiagnosticResults(diagnostics2, analyzer, new DiagnosticResult[0]);
-        }
-
-        private static Document CreateDocument(string fileName, string source)
-        {
-            return GetSampleProject().AddDocument(fileName, SourceText.From(source));
         }
 
         private static Project GetSampleProject()

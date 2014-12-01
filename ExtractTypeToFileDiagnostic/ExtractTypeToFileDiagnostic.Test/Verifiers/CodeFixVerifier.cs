@@ -35,10 +35,11 @@ namespace ExtractTypeToFileDiagnostic.Test.Verifiers
             Assert.AreEqual(expectedProjects.Count, actualProjects.Count);
 
             var zippedProjects = expectedProjects
-                .OrderBy(x => x.Name)
-                .Zip(actualProjects.OrderBy(x => x.Name), (expected, actual) => new { Expected = expected, Actual = actual });
+                .OrderBy(x => x.Id)
+                .Zip(actualProjects.OrderBy(x => x.Id), (expected, actual) => new { Expected = expected, Actual = actual });
             foreach (var p in zippedProjects)
             {
+                Assert.AreEqual(p.Expected.Id, p.Actual.Id);
                 Assert.AreEqual(p.Expected.Name, p.Actual.Name);
 
                 var expectedDocuments = p.Expected.Documents.ToList();
@@ -47,11 +48,12 @@ namespace ExtractTypeToFileDiagnostic.Test.Verifiers
                 Assert.AreEqual(expectedDocuments.Count, actualDocuments.Count);
 
                 var zippedDocuments = expectedDocuments
-                    .OrderBy(x => x.Name)
-                    .Zip(actualDocuments.OrderBy(x => x.Name), (expected, actual) => new { Expected = expected, Actual = actual });
+                    .OrderBy(x => x.Id)
+                    .Zip(actualDocuments.OrderBy(x => x.Id), (expected, actual) => new { Expected = expected, Actual = actual });
 
                 foreach (var d in zippedDocuments)
                 {
+                    Assert.AreEqual(d.Expected.Id, d.Actual.Id);
                     Assert.AreEqual(d.Expected.Name, d.Actual.Name);
 
                     var expectedContent = await GetStringFromDocumentAsync(d.Expected);
