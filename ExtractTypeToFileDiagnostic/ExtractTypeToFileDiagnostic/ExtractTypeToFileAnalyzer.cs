@@ -2,6 +2,8 @@ using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 using System.IO;
+using System.Diagnostics;
+using System.Linq;
 
 namespace ExtractTypeToFileDiagnostic
 {
@@ -26,11 +28,15 @@ namespace ExtractTypeToFileDiagnostic
         {
             var namedTypeSymbol = (INamedTypeSymbol)context.Symbol;
 
+            Debug.Assert(namedTypeSymbol.Locations.Length == 1, "Didn't expect multiple symbol locations.");
+
+            var location = namedTypeSymbol.Locations.First();
+
             var actualTypeName = namedTypeSymbol.MetadataName;
-            var expectedTypeName = Path.GetFileNameWithoutExtension(namedTypeSymbol.Locations[0].SourceTree.FilePath);
+            var expectedTypeName = Path.GetFileNameWithoutExtension(location.SourceTree.FilePath);
             if (!actualTypeName.Equals(expectedTypeName))
             {
-                var diagnostic = Diagnostic.Create(Rule, namedTypeSymbol.Locations[0], actualTypeName, expectedTypeName);
+                var diagnostic = Diagnostic.Create(Rule, location, actualTypeName, expectedTypeName);
                 context.ReportDiagnostic(diagnostic);
             }
         }
