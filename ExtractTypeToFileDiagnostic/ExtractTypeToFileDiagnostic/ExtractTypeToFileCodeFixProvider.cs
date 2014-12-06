@@ -41,13 +41,15 @@ namespace ExtractTypeToFileDiagnostic
 
         private async Task<Solution> RenameFileAsync(Document document, TypeDeclarationSyntax typeDecl, CancellationToken cancellationToken)
         {
-            var semanticModel = await document.GetSemanticModelAsync(cancellationToken);
+            var root = await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
+
+            var semanticModel = await document.GetSemanticModelAsync(cancellationToken).ConfigureAwait(false);
             var typeSymbol = semanticModel.GetDeclaredSymbol(typeDecl, cancellationToken);
 
             return document.Project
                 .RemoveDocument(document.Id)
                 .Solution
-                .AddDocument(document.Id, typeSymbol.MetadataName + ".cs", await document.GetTextAsync());
+                .AddDocument(document.Id, typeSymbol.MetadataName + ".cs", await document.GetTextAsync().ConfigureAwait(false));
         }
     }
 }
