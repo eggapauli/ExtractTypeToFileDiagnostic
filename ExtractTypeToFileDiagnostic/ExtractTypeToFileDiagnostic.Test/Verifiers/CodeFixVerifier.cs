@@ -28,37 +28,40 @@ namespace ExtractTypeToFileDiagnostic.Test.Verifiers
             return operations.OfType<ApplyChangesOperation>().Single().ChangedSolution;
         }
 
-        public static async Task VerifyFix(Solution expectedSolution, Solution actualSolution)
+        public static async Task VerifyFix(Solution expectedSolution, Solution actualSolution, params DocumentId[] excludeFromIdCheck)
         {
             var expectedProjects = expectedSolution.Projects.ToList();
             var actualProjects = actualSolution.Projects.ToList();
-            Assert.AreEqual(expectedProjects.Count, actualProjects.Count);
+            Assert.AreEqual(expectedProjects.Count, actualProjects.Count, "Solutions must have same number of projects");
 
             var zippedProjects = expectedProjects
-                .OrderBy(x => x.Id)
-                .Zip(actualProjects.OrderBy(x => x.Id), (expected, actual) => new { Expected = expected, Actual = actual });
+                .OrderBy(x => x.Name)
+                .Zip(actualProjects.OrderBy(x => x.Name), (expected, actual) => new { Expected = expected, Actual = actual });
             foreach (var p in zippedProjects)
             {
-                Assert.AreEqual(p.Expected.Id, p.Actual.Id);
-                Assert.AreEqual(p.Expected.Name, p.Actual.Name);
+                Assert.AreEqual(p.Expected.Id, p.Actual.Id, "Projects must have same id");
+                Assert.AreEqual(p.Expected.Name, p.Actual.Name, "Projects must have same name");
 
                 var expectedDocuments = p.Expected.Documents.ToList();
                 var actualDocuments = p.Actual.Documents.ToList();
 
-                Assert.AreEqual(expectedDocuments.Count, actualDocuments.Count);
+                Assert.AreEqual(expectedDocuments.Count, actualDocuments.Count, "Projects must have same number of documents");
 
                 var zippedDocuments = expectedDocuments
-                    .OrderBy(x => x.Id)
-                    .Zip(actualDocuments.OrderBy(x => x.Id), (expected, actual) => new { Expected = expected, Actual = actual });
+                    .OrderBy(x => x.Name)
+                    .Zip(actualDocuments.OrderBy(x => x.Name), (expected, actual) => new { Expected = expected, Actual = actual });
 
                 foreach (var d in zippedDocuments)
                 {
-                    Assert.AreEqual(d.Expected.Id, d.Actual.Id);
-                    Assert.AreEqual(d.Expected.Name, d.Actual.Name);
+                    if (!excludeFromIdCheck.Contains(d.Expected.Id))
+                    {
+                        Assert.AreEqual(d.Expected.Id, d.Actual.Id, "Documents must have same id");
+                    }
+                    Assert.AreEqual(d.Expected.Name, d.Actual.Name, "Documents must have same name");
 
                     var expectedContent = await GetStringFromDocumentAsync(d.Expected);
                     var actualContent = await GetStringFromDocumentAsync(d.Actual);
-                    Assert.AreEqual(expectedContent, actualContent);
+                    Assert.AreEqual(expectedContent, actualContent, "Documents must have same content");
                 }
             }
         }
