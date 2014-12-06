@@ -4,6 +4,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 using System.IO;
 using System.Diagnostics;
 using System.Linq;
+using System;
 
 namespace ExtractTypeToFileDiagnostic
 {
@@ -28,8 +29,9 @@ namespace ExtractTypeToFileDiagnostic
         {
             var namedTypeSymbol = (INamedTypeSymbol)context.Symbol;
 
-            Debug.Assert(namedTypeSymbol.Locations.Length == 1, "Didn't expect multiple symbol locations.");
+            if (IsNestedType(namedTypeSymbol)) return;
 
+            Debug.Assert(namedTypeSymbol.Locations.Length == 1, "Didn't expect multiple symbol locations.");
             var location = namedTypeSymbol.Locations.First();
 
             var actualTypeName = namedTypeSymbol.MetadataName;
@@ -39,6 +41,11 @@ namespace ExtractTypeToFileDiagnostic
                 var diagnostic = Diagnostic.Create(Rule, location, actualTypeName, expectedTypeName);
                 context.ReportDiagnostic(diagnostic);
             }
+        }
+
+        private static bool IsNestedType(INamedTypeSymbol namedTypeSymbol)
+        {
+            return namedTypeSymbol.ContainingType != null;
         }
     }
 }

@@ -58,6 +58,22 @@ namespace ExtractTypeToFileDiagnostic.Test
             DiagnosticVerifier.VerifyDiagnosticResults(diagnostics2, analyzer, new DiagnosticResult[0]);
         }
 
+        [Test]
+        public async Task ShouldNotProduceDiagnosticForNestedType()
+        {
+            var content = @"class TypeA { class TypeB {} }";
+
+            var project = GetSampleProject();
+            var documentId = DocumentId.CreateNewId(project.Id);
+            var document = project.Solution
+                .AddDocument(documentId, "TypeA.cs", content)
+                .GetDocument(documentId);
+
+            var analyzer = GetCSharpDiagnosticAnalyzer();
+            var diagnostics = await DiagnosticVerifier.GetSortedDiagnosticsFromDocumentsAsync(analyzer, document);
+            DiagnosticVerifier.VerifyDiagnosticResults(diagnostics, analyzer, new DiagnosticResult[0]);
+        }
+
         private static string CreateContentWithSingleType()
         {
             return @"
