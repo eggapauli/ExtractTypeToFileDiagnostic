@@ -8,7 +8,8 @@ using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Rename;
+using System;
+using Microsoft.CodeAnalysis.CSharp.Extensions;
 
 namespace ExtractTypeToFileDiagnostic
 {
@@ -27,22 +28,55 @@ namespace ExtractTypeToFileDiagnostic
 
         public sealed override async Task ComputeFixesAsync(CodeFixContext context)
         {
-            var root = await context.Document.GetSyntaxRootAsync(context.CancellationToken).ConfigureAwait(false);
-
             var diagnostic = context.Diagnostics.First();
             var diagnosticSpan = diagnostic.Location.SourceSpan;
 
-            var declaration = root.FindToken(diagnosticSpan.Start).Parent.AncestorsAndSelf().OfType<TypeDeclarationSyntax>().First();
+            var root = await context.Document.GetSyntaxRootAsync(context.CancellationToken).ConfigureAwait(false);
+            var declaration = root.FindToken(diagnosticSpan.Start).Parent.AncestorsAndSelf().OfType<TypeDeclarationSyntax>().Single();
 
-            context.RegisterFix(
-                CodeAction.Create("Rename file to match type name", c => RenameFileAsync(context.Document, declaration, c)),
-                diagnostic);
+            if (DocumentContainsMultipleTypeDeclarations(root))
+            {
+                context.RegisterFix(
+                    CodeAction.Create("Extract type to file", c => ExtractTypeAsync(context.Document, root, declaration, c)),
+                    diagnostic);
+            }
+            else
+            {
+                context.RegisterFix(
+                    CodeAction.Create("Rename file to match type name", c => RenameFileAsync(context.Document, root, declaration, c)),
+                    diagnostic);
+            }
         }
 
-        private async Task<Solution> RenameFileAsync(Document document, TypeDeclarationSyntax typeDecl, CancellationToken cancellationToken)
+        private bool DocumentContainsMultipleTypeDeclarations(SyntaxNode root)
         {
-            var root = await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
+            return root.DescendantNodes().OfType<TypeDeclarationSyntax>().Skip(1).Any();
+        }
 
+        private async Task<Solution> ExtractTypeAsync(Document document, SyntaxNode root, TypeDeclarationSyntax typeDecl, CancellationToken cancellationToken)
+        {
+            var semanticModel = await document.GetSemanticModelAsync(cancellationToken).ConfigureAwait(false);
+            var typeSymbol = semanticModel.GetDeclaredSymbol(typeDecl, cancellationToken);
+
+            NamespaceDeclarationSyntax parent;
+            MemberDeclarationSyntax child = typeDecl;
+            while ((parent = (NamespaceDeclarationSyntax)child.Parent) != null)
+            {
+                parent = parent.WithMembers(SyntaxFactory.List(new[] { child }));
+                child = parent;
+            }
+            var extractedTypeRoot = ((CompilationUnitSyntax)root).WithMembers(SyntaxFactory.List(new[] { child }));
+
+            return document
+                .WithSyntaxRoot(root.RemoveNode(typeDecl, SyntaxRemoveOptions.KeepNoTrivia))
+                .Project
+                .AddDocument(typeSymbol.MetadataName + ".cs", extractedTypeRoot.GetText())
+                .Project
+                .Solution;
+        }
+
+        private async Task<Solution> RenameFileAsync(Document document, SyntaxNode root, TypeDeclarationSyntax typeDecl, CancellationToken cancellationToken)
+        {
             var semanticModel = await document.GetSemanticModelAsync(cancellationToken).ConfigureAwait(false);
             var typeSymbol = semanticModel.GetDeclaredSymbol(typeDecl, cancellationToken);
 

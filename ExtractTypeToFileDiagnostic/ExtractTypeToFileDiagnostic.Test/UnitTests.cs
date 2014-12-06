@@ -4,6 +4,7 @@ using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Diagnostics;
 using NUnit.Framework;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using TestHelper;
@@ -27,7 +28,7 @@ namespace ExtractTypeToFileDiagnostic.Test
         [Test]
         public async Task ShouldRenameFileWhenTypeNameDoesNotMatchFileName()
         {
-            var content = CreateContentWithSingleType();
+            var content = CreateContentWithClasses("TypeName");
 
             var project = GetSampleProject();
             var documentId = DocumentId.CreateNewId(project.Id);
@@ -74,9 +75,46 @@ namespace ExtractTypeToFileDiagnostic.Test
             DiagnosticVerifier.VerifyDiagnosticResults(diagnostics, analyzer, new DiagnosticResult[0]);
         }
 
-        private static string CreateContentWithSingleType()
+        [Test]
+        public async Task ShouldExtractTypeWhenFileContainsMultipleTypes()
         {
-            return @"
+            var project = GetSampleProject();
+            var documentAId = DocumentId.CreateNewId(project.Id);
+            var document = project.Solution
+                .AddDocument(documentAId, "TypeA.cs", CreateContentWithClasses("TypeA", "TypeB"))
+                .GetDocument(documentAId);
+
+            var expectedDiagnostic = new DiagnosticResult
+            {
+                Id = ExtractTypeToFileAnalyzer.DiagnosticId,
+                Message = string.Format(ExtractTypeToFileAnalyzer.MessageFormat, "TypeB", "TypeA"),
+                Severity = DiagnosticSeverity.Warning,
+                Locations = new[] { new DiagnosticResultLocation("TypeA.cs", 12, 27) }
+            };
+
+            var analyzer = GetCSharpDiagnosticAnalyzer();
+            var diagnostics = await DiagnosticVerifier.GetSortedDiagnosticsFromDocumentsAsync(analyzer, document);
+            DiagnosticVerifier.VerifyDiagnosticResults(diagnostics, analyzer, expectedDiagnostic);
+
+            var documentBId = DocumentId.CreateNewId(project.Id);
+            var expectedSolution = project.Solution
+                .AddDocument(documentAId, "TypeA.cs", CreateContentWithClasses("TypeA"))
+                .AddDocument(documentBId, "TypeB.cs", CreateContentWithClasses("TypeB"));
+            var actualSolution = await CodeFixVerifier.ApplyFixAsync(GetCSharpCodeFixProvider(), document, diagnostics.Single());
+
+            await CodeFixVerifier.VerifyFix(expectedSolution, actualSolution, documentBId);
+
+            var diagnostics2 = await DiagnosticVerifier.GetSortedDiagnosticsFromDocumentsAsync(analyzer, expectedSolution.GetDocument(documentAId));
+            DiagnosticVerifier.VerifyDiagnosticResults(diagnostics2, analyzer, new DiagnosticResult[0]);
+            var diagnostics3 = await DiagnosticVerifier.GetSortedDiagnosticsFromDocumentsAsync(analyzer, expectedSolution.GetDocument(documentBId));
+            DiagnosticVerifier.VerifyDiagnosticResults(diagnostics2, analyzer, new DiagnosticResult[0]);
+        }
+
+        private static string CreateContentWithClasses(params string[] classNames)
+        {
+            var classDeclarations = classNames
+                .Select(name => string.Format(@"                    class {0} {{ }}", name));
+            return string.Format(@"
                 using System;
                 using System.Collections.Generic;
                 using System.Linq;
@@ -85,11 +123,9 @@ namespace ExtractTypeToFileDiagnostic.Test
                 using System.Diagnostics;
 
                 namespace ConsoleApplication1
-                {
-                    class TypeName
-                    {
-                    }
-                }";
+                {{
+{0}
+                }}", string.Join(Environment.NewLine, classDeclarations));
         }
 
         private static Project GetSampleProject()
