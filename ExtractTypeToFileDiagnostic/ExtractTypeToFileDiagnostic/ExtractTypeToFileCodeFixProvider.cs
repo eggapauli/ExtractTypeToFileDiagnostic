@@ -58,13 +58,13 @@ namespace ExtractTypeToFileDiagnostic
             var semanticModel = await document.GetSemanticModelAsync(cancellationToken).ConfigureAwait(false);
             var typeSymbol = semanticModel.GetDeclaredSymbol(typeDecl, cancellationToken);
 
-            NamespaceDeclarationSyntax parent;
-            MemberDeclarationSyntax child = typeDecl;
-            while ((parent = (NamespaceDeclarationSyntax)child.Parent) != null)
-            {
-                parent = parent.WithMembers(SyntaxFactory.List(new[] { child }));
-                child = parent;
-            }
+            var child = typeDecl
+                .Ancestors()
+                .OfType<NamespaceDeclarationSyntax>()
+                .Aggregate(
+                    (MemberDeclarationSyntax)typeDecl,
+                    (acc, nsDecl) => nsDecl.WithMembers(SyntaxFactory.List(new MemberDeclarationSyntax[] { acc })));
+
             var extractedTypeRoot = ((CompilationUnitSyntax)root).WithMembers(SyntaxFactory.List(new[] { child }));
 
             return document

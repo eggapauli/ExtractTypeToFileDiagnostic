@@ -155,6 +155,80 @@ namespace TestNamespace
             DiagnosticVerifier.VerifyDiagnosticResults(diagnostics2, analyzer, new DiagnosticResult[0]);
         }
 
+        [Test]
+        public async Task ShouldWorkWhenTypeToExtractIsInNestedNamespace()
+        {
+            var content =
+@"using System;
+using System.Linq;
+
+namespace TestNamespace
+{
+    namespace SubNamespace
+    {
+        class TypeB { }
+    }
+
+    class TypeA { }
+}";
+
+            var project = GetSampleProject();
+            var documentAId = DocumentId.CreateNewId(project.Id);
+            var document = project.Solution
+                .AddDocument(documentAId, "TypeA.cs", content)
+                .GetDocument(documentAId);
+
+            var expectedDiagnostic = new DiagnosticResult
+            {
+                Id = ExtractTypeToFileAnalyzer.DiagnosticId,
+                Message = string.Format(ExtractTypeToFileAnalyzer.MessageFormat, "TypeB", "TypeA"),
+                Severity = DiagnosticSeverity.Warning,
+                Locations = new[] { new DiagnosticResultLocation("TypeA.cs", 8, 15) }
+            };
+
+            var analyzer = GetCSharpDiagnosticAnalyzer();
+            var diagnostics = await DiagnosticVerifier.GetSortedDiagnosticsFromDocumentsAsync(analyzer, document);
+            DiagnosticVerifier.VerifyDiagnosticResults(diagnostics, analyzer, expectedDiagnostic);
+
+            var expectedTypeAContent =
+@"using System;
+using System.Linq;
+
+namespace TestNamespace
+{
+    namespace SubNamespace
+    {
+    }
+
+    class TypeA { }
+}";
+
+            var expectedTypeBContent =
+@"using System;
+using System.Linq;
+
+namespace TestNamespace
+{
+    namespace SubNamespace
+    {
+        class TypeB { }
+    }
+}";
+
+            var documentBId = DocumentId.CreateNewId(project.Id);
+            var expectedSolution = project.Solution
+                .AddDocument(documentAId, "TypeA.cs", expectedTypeAContent)
+                .AddDocument(documentBId, "TypeB.cs", expectedTypeBContent);
+            var actualSolution = await CodeFixVerifier.ApplyFixAsync(GetCSharpCodeFixProvider(), document, diagnostics.Single());
+
+            await CodeFixVerifier.VerifyFix(expectedSolution, actualSolution, documentBId);
+
+            var diagnostics2 = await DiagnosticVerifier.GetSortedDiagnosticsFromDocumentsAsync(analyzer, expectedSolution.GetDocument(documentAId));
+            DiagnosticVerifier.VerifyDiagnosticResults(diagnostics2, analyzer, new DiagnosticResult[0]);
+            var diagnostics3 = await DiagnosticVerifier.GetSortedDiagnosticsFromDocumentsAsync(analyzer, expectedSolution.GetDocument(documentBId));
+            DiagnosticVerifier.VerifyDiagnosticResults(diagnostics2, analyzer, new DiagnosticResult[0]);
+        }
+
         private static Project GetSampleProject()
         {
             const string projectName = "SampleProject";
