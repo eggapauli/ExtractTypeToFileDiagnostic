@@ -19,7 +19,7 @@ namespace ExtractTypeToFileDiagnostic.Test
         public async Task ShouldNotProduceDiagnosticsWhenFileIsEmpty()
         {
             var analyzer = GetCSharpDiagnosticAnalyzer();
-            var document = GetSampleProject().AddDocument("Class1.cs", "");
+            var document = GetSampleProject().AddDocument("Class1.cs", string.Empty);
 
             var diagnostics = await DiagnosticVerifier.GetSortedDiagnosticsFromDocumentsAsync(analyzer, document);
 
