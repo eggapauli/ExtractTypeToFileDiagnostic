@@ -45,7 +45,7 @@ namespace ExtractTypeToFileDiagnostic.Test.Verifiers
                 var expectedDocuments = p.Expected.Documents.ToList();
                 var actualDocuments = p.Actual.Documents.ToList();
 
-                Assert.AreEqual(expectedDocuments.Count, actualDocuments.Count, "Projects must have same number of documents");
+                Assert.AreEqual(expectedDocuments.Count, actualDocuments.Count, "Projects '{0}' must have same number of documents", p.Expected.Name);
 
                 var zippedDocuments = expectedDocuments
                     .OrderBy(x => x.Name)
@@ -61,7 +61,7 @@ namespace ExtractTypeToFileDiagnostic.Test.Verifiers
 
                     var expectedContent = await GetStringFromDocumentAsync(d.Expected);
                     var actualContent = await GetStringFromDocumentAsync(d.Actual);
-                    Assert.AreEqual(expectedContent, actualContent, "Documents must have same content");
+                    Assert.AreEqual(expectedContent, actualContent, "Documents '{0}' must have same content", d.Expected.Name);
                 }
             }
         }
