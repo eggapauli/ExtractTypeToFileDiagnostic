@@ -31,14 +31,15 @@ namespace ExtractTypeToFileDiagnostic
 
             if (IsNestedType(namedTypeSymbol)) return;
 
-            Debug.Assert(namedTypeSymbol.Locations.Length == 1, "Didn't expect multiple symbol locations.");
-            var location = namedTypeSymbol.Locations.First();
-
             var actualTypeName = namedTypeSymbol.MetadataName;
-            var expectedTypeName = Path.GetFileNameWithoutExtension(location.SourceTree.FilePath);
-            if (!actualTypeName.Equals(expectedTypeName))
+            var diagnostics = namedTypeSymbol
+                .Locations
+                .Select(location => new { Location = location, ExpectedTypeName = Path.GetFileNameWithoutExtension(location.SourceTree.FilePath) })
+                .Where(x => actualTypeName != x.ExpectedTypeName)
+                .Select(x => Diagnostic.Create(Rule, x.Location, actualTypeName, x.ExpectedTypeName));
+
+            foreach (var diagnostic in diagnostics)
             {
-                var diagnostic = Diagnostic.Create(Rule, location, actualTypeName, expectedTypeName);
                 context.ReportDiagnostic(diagnostic);
             }
         }

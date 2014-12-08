@@ -227,6 +227,48 @@ namespace TestNamespace
             DiagnosticVerifier.VerifyDiagnosticResults(diagnostics2, analyzer, new DiagnosticResult[0]);
         }
 
+        [Test]
+        public async Task ShouldExtractTypeWithMultipleSymbolLocations()
+        {
+            var content =
+@"using System;
+using System.Linq;
+
+namespace TestNamespace
+{
+    class TypeA { }
+
+    class TypeA { }
+}";
+
+            var project = GetSampleProject();
+            var documentAId = DocumentId.CreateNewId(project.Id);
+            var document = project.Solution
+                .AddDocument(documentAId, "Class1.cs", content)
+                .GetDocument(documentAId);
+
+            var expectedDiagnostics = new[] {
+                new DiagnosticResult
+                {
+                    Id = ExtractTypeToFileAnalyzer.DiagnosticId,
+                    Message = string.Format(ExtractTypeToFileAnalyzer.MessageFormat, "TypeA", "Class1"),
+                    Severity = DiagnosticSeverity.Warning,
+                    Locations = new[] { new DiagnosticResultLocation("Class1.cs", 6, 11) }
+                },
+                new DiagnosticResult
+                {
+                    Id = ExtractTypeToFileAnalyzer.DiagnosticId,
+                    Message = string.Format(ExtractTypeToFileAnalyzer.MessageFormat, "TypeA", "Class1"),
+                    Severity = DiagnosticSeverity.Warning,
+                    Locations = new[] { new DiagnosticResultLocation("Class1.cs", 8, 11) }
+                }
+            };
+
+            var analyzer = GetCSharpDiagnosticAnalyzer();
+            var diagnostics = await DiagnosticVerifier.GetSortedDiagnosticsFromDocumentsAsync(analyzer, document);
+            DiagnosticVerifier.VerifyDiagnosticResults(diagnostics, analyzer, expectedDiagnostics);
+        }
+
         private static Project GetSampleProject()
         {
             const string projectName = "SampleProject";
