@@ -28,7 +28,7 @@ namespace ExtractTypeToFileDiagnostic.Test.Verifiers
             return operations.OfType<ApplyChangesOperation>().Single().ChangedSolution;
         }
 
-        public static async Task VerifyFix(Solution expectedSolution, Solution actualSolution, params DocumentId[] excludeFromIdCheck)
+        public static async Task VerifyFix(Solution expectedSolution, Solution actualSolution)
         {
             var expectedProjects = expectedSolution.Projects.ToList();
             var actualProjects = actualSolution.Projects.ToList();
@@ -53,10 +53,6 @@ namespace ExtractTypeToFileDiagnostic.Test.Verifiers
 
                 foreach (var d in zippedDocuments)
                 {
-                    if (!excludeFromIdCheck.Contains(d.Expected.Id))
-                    {
-                        Assert.AreEqual(d.Expected.Id, d.Actual.Id, "Documents must have same id");
-                    }
                     Assert.AreEqual(d.Expected.Name, d.Actual.Name, "Documents must have same name");
 
                     var expectedContent = await GetStringFromDocumentAsync(d.Expected);

@@ -147,7 +147,7 @@ namespace TestNamespace
                 .AddDocument(documentBId, "TypeB.cs", expectedTypeBContent);
             var actualSolution = await CodeFixVerifier.ApplyFixAsync(GetCSharpCodeFixProvider(), document, diagnostics.Single());
 
-            await CodeFixVerifier.VerifyFix(expectedSolution, actualSolution, documentBId);
+            await CodeFixVerifier.VerifyFix(expectedSolution, actualSolution);
 
             var diagnostics2 = await DiagnosticVerifier.GetSortedDiagnosticsFromDocumentsAsync(analyzer, expectedSolution.GetDocument(documentAId));
             DiagnosticVerifier.VerifyDiagnosticResults(diagnostics2, analyzer, new DiagnosticResult[0]);
@@ -221,7 +221,7 @@ namespace TestNamespace
                 .AddDocument(documentBId, "TypeB.cs", expectedTypeBContent);
             var actualSolution = await CodeFixVerifier.ApplyFixAsync(GetCSharpCodeFixProvider(), document, diagnostics.Single());
 
-            await CodeFixVerifier.VerifyFix(expectedSolution, actualSolution, documentBId);
+            await CodeFixVerifier.VerifyFix(expectedSolution, actualSolution);
 
             var diagnostics2 = await DiagnosticVerifier.GetSortedDiagnosticsFromDocumentsAsync(analyzer, expectedSolution.GetDocument(documentAId));
             DiagnosticVerifier.VerifyDiagnosticResults(diagnostics2, analyzer, new DiagnosticResult[0]);

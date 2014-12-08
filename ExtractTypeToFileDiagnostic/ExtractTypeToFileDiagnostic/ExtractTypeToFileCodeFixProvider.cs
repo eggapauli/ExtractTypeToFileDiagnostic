@@ -82,8 +82,9 @@ namespace ExtractTypeToFileDiagnostic
 
             return document.Project
                 .RemoveDocument(document.Id)
-                .Solution
-                .AddDocument(document.Id, typeSymbol.MetadataName + ".cs", await document.GetTextAsync().ConfigureAwait(false));
+                .AddDocument(typeSymbol.MetadataName + ".cs", await document.GetTextAsync().ConfigureAwait(false))
+                .Project
+                .Solution;
         }
     }
 }
