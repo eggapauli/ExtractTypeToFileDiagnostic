@@ -154,7 +154,7 @@ namespace TestNamespace
         }
 
         [Test]
-        public async Task ShouldWorkWhenTypeToExtractIsInNestedNamespace()
+        public async Task ShouldExtractTypeFromNestedNamespace()
         {
             var content =
 @"using System;
