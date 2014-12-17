@@ -114,10 +114,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Verifiers\CodeFixVerifier.cs" />
-    <Compile Include="Verifiers\DiagnosticVerifier.cs" />
-    <Compile Include="Helpers\DiagnosticResult.cs" />
-    <Compile Include="UnitTests.cs" />
+    <Compile Include="DiagnosticAndCodeFixTest.cs" />
+    <Compile Include="CodeFixes\GivenDocumentWithDoubleDefinedType.cs" />
+    <Compile Include="CodeFixes\GivenDocumentWithMultipleTopLevelTypes.cs" />
+    <Compile Include="CodeFixes\GivenDocumentWithMultipleTypesInDifferentNamespaces.cs" />
+    <Compile Include="CodeFixes\GivenDocumentWithSingleTypeAndWrongFileName.cs" />
+    <Compile Include="Diagnostics\DiagnosticTest.cs" />
+    <Compile Include="Diagnostics\GivenCorrectDocument.cs" />
+    <Compile Include="Diagnostics\GivenDocumentWithMultipleTopLevelTypes.cs" />
+    <Compile Include="Diagnostics\GivenDocumentWithMultipleTypesInDifferentNamespaces.cs" />
+    <Compile Include="Diagnostics\GivenDocumentWithDoubleDefinedType.cs" />
+    <Compile Include="Diagnostics\GivenDocumentWithSingleTypeAndWrongFileName.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
