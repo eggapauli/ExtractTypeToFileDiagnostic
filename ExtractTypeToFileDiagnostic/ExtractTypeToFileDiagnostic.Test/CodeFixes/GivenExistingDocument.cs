@@ -35,6 +35,31 @@ namespace TestNamespace
             solution.Projects.Single().Documents.Should().ContainSingle(d => d.Name == "TypeA.cs");
         }
 
+        [Test]
+        public async Task ShouldRemoveOldDocument()
+        {
+            var solution = await SetupAndApplyAsync();
+
+            solution.Projects.Single().Documents.Should().NotContain(d => d.Name == "Class1.cs");
+        }
+
+        [Test]
+        public async Task ShouldIntegrateIntoExistingDocument()
+        {
+            var solution = await SetupAndApplyAsync();
+
+            var content = await solution.Projects.Single().Documents.Single(d => d.Name == "TypeA.cs").GetTextAsync();
+            content.ToString().Should().Be(@"using System;
+using System.Linq;
+
+namespace TestNamespace
+{
+    class SomeType { }
+    class TypeA { }
+}");
+
+        }
+
         private async Task<Solution> SetupAndApplyAsync()
         {
             var syntaxTree = SyntaxFactory.ParseSyntaxTree(ContentClass1);
