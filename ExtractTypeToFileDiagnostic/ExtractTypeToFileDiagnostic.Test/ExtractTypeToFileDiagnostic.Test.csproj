@@ -114,7 +114,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CodeFixes\ExtractTypeToFileCodeFixProvider.cs" />
     <Compile Include="DiagnosticAndCodeFixTest.cs" />
     <Compile Include="CodeFixes\GivenExistingDocument.cs" />
     <Compile Include="CodeFixes\GivenDocumentWithMultipleTopLevelTypes.cs" />
