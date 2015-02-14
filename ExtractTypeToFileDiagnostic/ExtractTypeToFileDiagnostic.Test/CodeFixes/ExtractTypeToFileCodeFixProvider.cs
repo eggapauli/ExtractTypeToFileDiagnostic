@@ -62,37 +62,37 @@ namespace ExtractTypeToFileDiagnostic
             return root.DescendantNodes().OfType<TypeDeclarationSyntax>().Skip(1).Any();
         }
 
-        private async Task<Solution> IntegrateTypeAsync(Document document, SyntaxNode root, TypeDeclarationSyntax typeDecl, CancellationToken cancellationToken)
+        private async Task<Solution> IntegrateTypeAsync(Document document, SyntaxNode root, TypeDeclarationSyntax declaration, CancellationToken ct)
         {
             return document.Project.Solution;
         }
 
-        private async Task<Solution> ExtractTypeAsync(Document document, SyntaxNode root, TypeDeclarationSyntax typeDecl, CancellationToken cancellationToken)
+        private async Task<Solution> ExtractTypeAsync(Document document, SyntaxNode root, TypeDeclarationSyntax declaration, CancellationToken ct)
         {
-            var semanticModel = await document.GetSemanticModelAsync(cancellationToken).ConfigureAwait(false);
-            var typeSymbol = semanticModel.GetDeclaredSymbol(typeDecl, cancellationToken);
+            var semanticModel = await document.GetSemanticModelAsync(ct).ConfigureAwait(false);
+            var typeSymbol = semanticModel.GetDeclaredSymbol(declaration, ct);
 
-            var child = typeDecl
+            var child = declaration
                 .Ancestors()
                 .OfType<NamespaceDeclarationSyntax>()
                 .Aggregate(
-                    (MemberDeclarationSyntax)typeDecl,
+                    (MemberDeclarationSyntax)declaration,
                     (acc, nsDecl) => nsDecl.WithMembers(SyntaxFactory.List(new MemberDeclarationSyntax[] { acc })));
 
             var extractedTypeRoot = ((CompilationUnitSyntax)root).WithMembers(SyntaxFactory.List(new[] { child }));
 
             return document
-                .WithSyntaxRoot(root.RemoveNode(typeDecl, SyntaxRemoveOptions.KeepNoTrivia))
+                .WithSyntaxRoot(root.RemoveNode(declaration, SyntaxRemoveOptions.KeepNoTrivia))
                 .Project
                 .AddDocument(typeSymbol.MetadataName + ".cs", extractedTypeRoot.GetText())
                 .Project
                 .Solution;
         }
 
-        private async Task<Solution> RenameFileAsync(Document document, SyntaxNode root, TypeDeclarationSyntax typeDecl, CancellationToken cancellationToken)
+        private async Task<Solution> RenameFileAsync(Document document, SyntaxNode root, TypeDeclarationSyntax declaration, CancellationToken ct)
         {
-            var semanticModel = await document.GetSemanticModelAsync(cancellationToken).ConfigureAwait(false);
-            var typeSymbol = semanticModel.GetDeclaredSymbol(typeDecl, cancellationToken);
+            var semanticModel = await document.GetSemanticModelAsync(ct).ConfigureAwait(false);
+            var typeSymbol = semanticModel.GetDeclaredSymbol(declaration, ct);
 
             return document.Project
                 .RemoveDocument(document.Id)

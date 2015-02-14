@@ -115,7 +115,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DiagnosticAndCodeFixTest.cs" />
-    <Compile Include="CodeFixes\GivenDocumentWithDoubleDefinedType.cs" />
+    <Compile Include="CodeFixes\GivenExistingDocument.cs" />
     <Compile Include="CodeFixes\GivenDocumentWithMultipleTopLevelTypes.cs" />
     <Compile Include="CodeFixes\GivenDocumentWithMultipleTypesInDifferentNamespaces.cs" />
     <Compile Include="CodeFixes\GivenDocumentWithSingleTypeAndWrongFileName.cs" />
